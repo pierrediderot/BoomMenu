@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.nightonke.boommenusample">
+    >
 
     <application
         android:allowBackup="true"
@@ -8,80 +8,80 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:exported="true" android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
+        <activity android:exported="true"
             android:name=".SimpleCircleButtonActivity"
             android:label="Simple Circle Button" />
-        <activity
+        <activity android:exported="true"
             android:name=".TextInsideCircleButtonActivity"
             android:label="Text Inside Button" />
-        <activity
+        <activity android:exported="true"
             android:name=".TextOutsideCircleButtonActivity"
             android:label="Text Outside Button" />
-        <activity
+        <activity android:exported="true"
             android:name=".HamButtonActivity"
             android:label="Ham Button" />
-        <activity
+        <activity android:exported="true"
             android:name=".SquareAndPieceCornerRadiusActivity"
             android:label="Square &amp; Piece Corner Radius" />
-        <activity
+        <activity android:exported="true"
             android:name=".BoomExampleActivity"
             android:label="Boom" />
-        <activity
+        <activity android:exported="true"
             android:name=".ButtonPlaceAlignmentActivity"
             android:label="Button Place Alignment" />
-        <activity
+        <activity android:exported="true"
             android:name=".OrderExampleActivity"
             android:label="Order" />
-        <activity
+        <activity android:exported="true"
             android:name=".ActionBarActivity"
             android:label="ActionBar" />
-        <activity
+        <activity android:exported="true"
             android:name=".ToolBarActivity"
             android:theme="@style/NoTitleTheme" />
-        <activity
+        <activity android:exported="true"
             android:name=".DraggableActivity"
             android:label="Draggable" />
-        <activity
+        <activity android:exported="true"
             android:name=".EaseActivity"
             android:label="Ease" />
-        <activity
+        <activity android:exported="true"
             android:name=".ListenerActivity"
             android:label="Listener" />
-        <activity
+        <activity android:exported="true"
             android:name=".ControlActivity"
             android:label="Control" />
-        <activity
+        <activity android:exported="true"
             android:name=".ShareActivity"
             android:label="Share" />
-        <activity
+        <activity android:exported="true"
             android:name=".ListViewActivity"
             android:label="List" />
-        <activity
+        <activity android:exported="true"
             android:name=".RecyclerViewActivity"
             android:label="Recycler View" />
-        <activity
+        <activity android:exported="true"
             android:name=".FragmentActivity"
             android:label="Fragment" />
-        <activity
+        <activity android:exported="true"
             android:name=".ChangeBoomButtonActivity"
             android:label="Change Boom Button" />
-        <activity
+        <activity android:exported="true"
             android:name=".ThreeDAnimationActivity"
             android:label="3D Animation" />
-        <activity
+        <activity android:exported="true"
             android:name=".CustomPositionActivity"
             android:label="Custom Position" />
-        <activity
+        <activity android:exported="true"
             android:name=".FadeViewsActivity"
             android:label="Fade Views" />
-        <activity
+        <activity android:exported="true"
             android:name=".OrientationActivity"
             android:configChanges="keyboardHidden|orientation|screenSize" />
     </application>
