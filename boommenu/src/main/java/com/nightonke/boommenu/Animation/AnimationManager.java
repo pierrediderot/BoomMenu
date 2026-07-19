@@ -7,6 +7,7 @@ import android.animation.TypeEvaluator;
 import android.graphics.PointF;
 import android.view.View;
 
+import android.content.Context;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.ButtonEnum;
 
@@ -26,9 +27,57 @@ import static com.nightonke.boommenu.Animation.BoomEnum.LINE;
 // Todo Cache
 public class AnimationManager {
 
+    private static float getAnimatorDurationScale(Context context) {
+        if (context == null) return 1.0f;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                return android.provider.Settings.Global.getFloat(context.getContentResolver(), android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+            } else {
+                return android.provider.Settings.System.getFloat(context.getContentResolver(), android.provider.Settings.System.ANIMATOR_DURATION_SCALE, 1.0f);
+            }
+        } catch (Exception e) {
+            return 1.0f;
+        }
+    }
+
     public static ObjectAnimator animate(Object target, String property, long delay, long duration,
                                          TimeInterpolator interpolator,
                                          AnimatorListenerAdapter listenerAdapter, float... values) {
+        float scale = 1.0f;
+        if (target instanceof View) {
+            scale = getAnimatorDurationScale(((View) target).getContext());
+        } else if (target instanceof BoomButton) {
+            scale = getAnimatorDurationScale(((BoomButton) target).getContext());
+        }
+
+        if (scale == 0f || duration == 0) {
+            final float finalValue = values[values.length - 1];
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    if (target instanceof View) {
+                        View view = (View) target;
+                        if ("x".equals(property)) view.setX(finalValue);
+                        else if ("y".equals(property)) view.setY(finalValue);
+                        else if ("alpha".equals(property)) view.setAlpha(finalValue);
+                        else if ("scaleX".equals(property)) view.setScaleX(finalValue);
+                        else if ("scaleY".equals(property)) view.setScaleY(finalValue);
+                        else if ("rotation".equals(property)) view.setRotation(finalValue);
+                    } else {
+                        try {
+                            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+                            target.getClass().getMethod(methodName, float.class).invoke(target, finalValue);
+                        } catch (Exception e) {}
+                    }
+                    if (listenerAdapter != null) {
+                        listenerAdapter.onAnimationStart(null);
+                        listenerAdapter.onAnimationEnd(null);
+                    }
+                }
+            });
+            return null;
+        }
+
         ObjectAnimator animator = ObjectAnimator.ofFloat(target, property, values);
         animator.setStartDelay(delay);
         animator.setDuration(duration);
@@ -65,6 +114,36 @@ public class AnimationManager {
 
     public static ObjectAnimator animate(Object target, String property, long delay, long duration,
             TypeEvaluator evaluator, AnimatorListenerAdapter listenerAdapter, int... values) {
+        float scale = 1.0f;
+        if (target instanceof View) {
+            scale = getAnimatorDurationScale(((View) target).getContext());
+        } else if (target instanceof BoomButton) {
+            scale = getAnimatorDurationScale(((BoomButton) target).getContext());
+        }
+
+        if (scale == 0f || duration == 0) {
+            final int finalValue = values[values.length - 1];
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    if (target instanceof View) {
+                        View view = (View) target;
+                        if ("backgroundColor".equals(property)) view.setBackgroundColor(finalValue);
+                    } else {
+                        try {
+                            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+                            target.getClass().getMethod(methodName, int.class).invoke(target, finalValue);
+                        } catch (Exception e) {}
+                    }
+                    if (listenerAdapter != null) {
+                        listenerAdapter.onAnimationStart(null);
+                        listenerAdapter.onAnimationEnd(null);
+                    }
+                }
+            });
+            return null;
+        }
+
         ObjectAnimator animator = ObjectAnimator.ofInt(target, property, values);
         animator.setStartDelay(delay);
         animator.setDuration(duration);
