@@ -40,41 +40,81 @@ public class AnimationManager {
         }
     }
 
+    /**
+     * Resolves the animator duration scale for a given animation target.
+     * Works for any View (including BoomButton, which extends FrameLayout).
+     */
+    private static float getScaleForTarget(Object target) {
+        if (target instanceof View) {
+            return getAnimatorDurationScale(((View) target).getContext());
+        }
+        return 1.0f;
+    }
+
+    /**
+     * Defers a bypass action to the next main-thread cycle via Handler.post().
+     * This ensures the Android layout pass completes before we mutate view coordinates,
+     * and that onAnimationStart/End listeners fire in a safe, sequential order.
+     */
+    private static void deferBypass(Runnable action, AnimatorListenerAdapter listenerAdapter) {
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                action.run();
+                if (listenerAdapter != null) {
+                    listenerAdapter.onAnimationStart(null);
+                    listenerAdapter.onAnimationEnd(null);
+                }
+            }
+        });
+    }
+
+    /**
+     * Applies a float property value directly to the target, using known setters
+     * for standard View properties and reflection as fallback for custom properties
+     * (e.g. ShareLinesView.showProcess / hideProcess).
+     */
+    private static void applyFloatProperty(Object target, String property, float value) {
+        if (target instanceof View) {
+            View view = (View) target;
+            if ("x".equals(property)) { view.setX(value); return; }
+            else if ("y".equals(property)) { view.setY(value); return; }
+            else if ("alpha".equals(property)) { view.setAlpha(value); return; }
+            else if ("scaleX".equals(property)) { view.setScaleX(value); return; }
+            else if ("scaleY".equals(property)) { view.setScaleY(value); return; }
+            else if ("rotation".equals(property)) { view.setRotation(value); return; }
+        }
+        // Fallback: reflection for custom properties (works for both View subclasses
+        // with non-standard properties and non-View targets)
+        try {
+            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+            target.getClass().getMethod(methodName, float.class).invoke(target, value);
+        } catch (Exception e) {}
+    }
+
+    /**
+     * Applies an int property value directly to the target, using known setters
+     * for standard View properties and reflection as fallback.
+     */
+    private static void applyIntProperty(Object target, String property, int value) {
+        if (target instanceof View) {
+            View view = (View) target;
+            if ("backgroundColor".equals(property)) { view.setBackgroundColor(value); return; }
+        }
+        try {
+            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+            target.getClass().getMethod(methodName, int.class).invoke(target, value);
+        } catch (Exception e) {}
+    }
+
     public static ObjectAnimator animate(Object target, String property, long delay, long duration,
                                          TimeInterpolator interpolator,
                                          AnimatorListenerAdapter listenerAdapter, float... values) {
-        float scale = 1.0f;
-        if (target instanceof View) {
-            scale = getAnimatorDurationScale(((View) target).getContext());
-        } else if (target instanceof BoomButton) {
-            scale = getAnimatorDurationScale(((BoomButton) target).getContext());
-        }
+        float scale = getScaleForTarget(target);
 
         if (scale == 0f || duration == 0) {
             final float finalValue = values[values.length - 1];
-            new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    if (target instanceof View) {
-                        View view = (View) target;
-                        if ("x".equals(property)) view.setX(finalValue);
-                        else if ("y".equals(property)) view.setY(finalValue);
-                        else if ("alpha".equals(property)) view.setAlpha(finalValue);
-                        else if ("scaleX".equals(property)) view.setScaleX(finalValue);
-                        else if ("scaleY".equals(property)) view.setScaleY(finalValue);
-                        else if ("rotation".equals(property)) view.setRotation(finalValue);
-                    } else {
-                        try {
-                            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
-                            target.getClass().getMethod(methodName, float.class).invoke(target, finalValue);
-                        } catch (Exception e) {}
-                    }
-                    if (listenerAdapter != null) {
-                        listenerAdapter.onAnimationStart(null);
-                        listenerAdapter.onAnimationEnd(null);
-                    }
-                }
-            });
+            deferBypass(() -> applyFloatProperty(target, property, finalValue), listenerAdapter);
             return null;
         }
 
@@ -114,33 +154,11 @@ public class AnimationManager {
 
     public static ObjectAnimator animate(Object target, String property, long delay, long duration,
             TypeEvaluator evaluator, AnimatorListenerAdapter listenerAdapter, int... values) {
-        float scale = 1.0f;
-        if (target instanceof View) {
-            scale = getAnimatorDurationScale(((View) target).getContext());
-        } else if (target instanceof BoomButton) {
-            scale = getAnimatorDurationScale(((BoomButton) target).getContext());
-        }
+        float scale = getScaleForTarget(target);
 
         if (scale == 0f || duration == 0) {
             final int finalValue = values[values.length - 1];
-            new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
-                @Override
-                public void run() {
-                    if (target instanceof View) {
-                        View view = (View) target;
-                        if ("backgroundColor".equals(property)) view.setBackgroundColor(finalValue);
-                    } else {
-                        try {
-                            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
-                            target.getClass().getMethod(methodName, int.class).invoke(target, finalValue);
-                        } catch (Exception e) {}
-                    }
-                    if (listenerAdapter != null) {
-                        listenerAdapter.onAnimationStart(null);
-                        listenerAdapter.onAnimationEnd(null);
-                    }
-                }
-            });
+            deferBypass(() -> applyIntProperty(target, property, finalValue), listenerAdapter);
             return null;
         }
 
