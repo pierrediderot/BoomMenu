@@ -1,20 +1,20 @@
 package com.nightonke.boommenu.Animation;
 
+import static com.nightonke.boommenu.Animation.BoomEnum.LINE;
+
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.TypeEvaluator;
+import android.content.Context;
 import android.graphics.PointF;
 import android.view.View;
 
-import android.content.Context;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.ButtonEnum;
 
 import java.util.ArrayList;
 import java.util.Random;
-
-import static com.nightonke.boommenu.Animation.BoomEnum.LINE;
 
 /**
  * Created by Weiping Huang at 03:27 on 16/7/26
