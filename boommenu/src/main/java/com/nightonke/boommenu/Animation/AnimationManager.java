@@ -1,9 +1,12 @@
 package com.nightonke.boommenu.Animation;
 
+import static com.nightonke.boommenu.Animation.BoomEnum.LINE;
+
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.TypeEvaluator;
+import android.content.Context;
 import android.graphics.PointF;
 import android.view.View;
 
@@ -12,8 +15,6 @@ import com.nightonke.boommenu.ButtonEnum;
 
 import java.util.ArrayList;
 import java.util.Random;
-
-import static com.nightonke.boommenu.Animation.BoomEnum.LINE;
 
 /**
  * Created by Weiping Huang at 03:27 on 16/7/26
@@ -26,9 +27,97 @@ import static com.nightonke.boommenu.Animation.BoomEnum.LINE;
 // Todo Cache
 public class AnimationManager {
 
+    private static float getAnimatorDurationScale(Context context) {
+        if (context == null) return 1.0f;
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                return android.provider.Settings.Global.getFloat(context.getContentResolver(), android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1.0f);
+            } else {
+                return android.provider.Settings.System.getFloat(context.getContentResolver(), android.provider.Settings.System.ANIMATOR_DURATION_SCALE, 1.0f);
+            }
+        } catch (Exception e) {
+            return 1.0f;
+        }
+    }
+
+    /**
+     * Resolves the animator duration scale for a given animation target.
+     * Works for any View (including BoomButton, which extends FrameLayout).
+     */
+    private static float getScaleForTarget(Object target) {
+        if (target instanceof View) {
+            return getAnimatorDurationScale(((View) target).getContext());
+        }
+        return 1.0f;
+    }
+
+    /**
+     * Defers a bypass action to the next main-thread cycle via Handler.post().
+     * This ensures the Android layout pass completes before we mutate view coordinates,
+     * and that onAnimationStart/End listeners fire in a safe, sequential order.
+     */
+    private static void deferBypass(Runnable action, AnimatorListenerAdapter listenerAdapter) {
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                action.run();
+                if (listenerAdapter != null) {
+                    listenerAdapter.onAnimationStart(null);
+                    listenerAdapter.onAnimationEnd(null);
+                }
+            }
+        });
+    }
+
+    /**
+     * Applies a float property value directly to the target, using known setters
+     * for standard View properties and reflection as fallback for custom properties
+     * (e.g. ShareLinesView.showProcess / hideProcess).
+     */
+    private static void applyFloatProperty(Object target, String property, float value) {
+        if (target instanceof View) {
+            View view = (View) target;
+            if ("x".equals(property)) { view.setX(value); return; }
+            else if ("y".equals(property)) { view.setY(value); return; }
+            else if ("alpha".equals(property)) { view.setAlpha(value); return; }
+            else if ("scaleX".equals(property)) { view.setScaleX(value); return; }
+            else if ("scaleY".equals(property)) { view.setScaleY(value); return; }
+            else if ("rotation".equals(property)) { view.setRotation(value); return; }
+        }
+        // Fallback: reflection for custom properties (works for both View subclasses
+        // with non-standard properties and non-View targets)
+        try {
+            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+            target.getClass().getMethod(methodName, float.class).invoke(target, value);
+        } catch (Exception e) {}
+    }
+
+    /**
+     * Applies an int property value directly to the target, using known setters
+     * for standard View properties and reflection as fallback.
+     */
+    private static void applyIntProperty(Object target, String property, int value) {
+        if (target instanceof View) {
+            View view = (View) target;
+            if ("backgroundColor".equals(property)) { view.setBackgroundColor(value); return; }
+        }
+        try {
+            String methodName = "set" + property.substring(0, 1).toUpperCase() + property.substring(1);
+            target.getClass().getMethod(methodName, int.class).invoke(target, value);
+        } catch (Exception e) {}
+    }
+
     public static ObjectAnimator animate(Object target, String property, long delay, long duration,
                                          TimeInterpolator interpolator,
                                          AnimatorListenerAdapter listenerAdapter, float... values) {
+        float scale = getScaleForTarget(target);
+
+        if (scale == 0f || duration == 0) {
+            final float finalValue = values[values.length - 1];
+            deferBypass(() -> applyFloatProperty(target, property, finalValue), listenerAdapter);
+            return null;
+        }
+
         ObjectAnimator animator = ObjectAnimator.ofFloat(target, property, values);
         animator.setStartDelay(delay);
         animator.setDuration(duration);
@@ -65,6 +154,14 @@ public class AnimationManager {
 
     public static ObjectAnimator animate(Object target, String property, long delay, long duration,
             TypeEvaluator evaluator, AnimatorListenerAdapter listenerAdapter, int... values) {
+        float scale = getScaleForTarget(target);
+
+        if (scale == 0f || duration == 0) {
+            final int finalValue = values[values.length - 1];
+            deferBypass(() -> applyIntProperty(target, property, finalValue), listenerAdapter);
+            return null;
+        }
+
         ObjectAnimator animator = ObjectAnimator.ofInt(target, property, values);
         animator.setStartDelay(delay);
         animator.setDuration(duration);

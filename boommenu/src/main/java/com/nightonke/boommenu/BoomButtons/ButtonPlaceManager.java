@@ -772,26 +772,26 @@ public class ButtonPlaceManager {
                 yOffset = parentSize.y - halfHeight - maxY - bmb.getButtonBottomMargin();
                 break;
             case Left:
-                xOffset = halfWidth + bmb.getButtonLeftMargin() - minY;
+                xOffset = halfWidth + bmb.getButtonLeftMargin() - minX;
                 break;
             case Right:
-                xOffset = parentSize.y - halfHeight - maxY - bmb.getButtonRightMargin();
+                xOffset = parentSize.x - halfWidth - maxX - bmb.getButtonRightMargin();
                 break;
             case TL:
                 yOffset = halfHeight + bmb.getButtonTopMargin() - minY;
-                xOffset = halfWidth + bmb.getButtonLeftMargin() - minY;
+                xOffset = halfWidth + bmb.getButtonLeftMargin() - minX;
                 break;
             case TR:
                 yOffset = halfHeight + bmb.getButtonTopMargin() - minY;
-                xOffset = parentSize.y - halfHeight - maxY - bmb.getButtonRightMargin();
+                xOffset = parentSize.x - halfWidth - maxX - bmb.getButtonRightMargin();
                 break;
             case BL:
                 yOffset = parentSize.y - halfHeight - maxY - bmb.getButtonBottomMargin();
-                xOffset = halfWidth + bmb.getButtonLeftMargin() - minY;
+                xOffset = halfWidth + bmb.getButtonLeftMargin() - minX;
                 break;
             case BR:
                 yOffset = parentSize.y - halfHeight - maxY - bmb.getButtonBottomMargin();
-                xOffset = parentSize.y - halfHeight - maxY - bmb.getButtonRightMargin();
+                xOffset = parentSize.x - halfWidth - maxX - bmb.getButtonRightMargin();
                 break;
         }
 
